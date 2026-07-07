@@ -1,0 +1,69 @@
+name: Produce Video
+
+# Manuel tetikle (Actions sekmesinden "Run workflow") ya da zamanlanmış çalıştır.
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Upload to YouTube? (true/false)"
+        required: false
+        default: "true"
+      privacy:
+        description: "private / unlisted / public"
+        required: false
+        default: "private"
+  # Otomatik günlük üretim istersen aşağıyı aç (UTC saat):
+  # schedule:
+  #   - cron: "0 9 * * *"
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Produce video
+        env:
+          NTY_GROQ_API_KEY: ${{ secrets.NTY_GROQ_API_KEY }}
+          NTY_YT_CLIENT_ID: ${{ secrets.NTY_YT_CLIENT_ID }}
+          NTY_YT_CLIENT_SECRET: ${{ secrets.NTY_YT_CLIENT_SECRET }}
+          NTY_YT_REFRESH_TOKEN: ${{ secrets.NTY_YT_REFRESH_TOKEN }}
+          NTY_UPLOAD: ${{ github.event.inputs.upload }}
+          NTY_PRIVACY: ${{ github.event.inputs.privacy }}
+        run: python factory.py
+
+      - name: Commit updated topics.txt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add topics.txt
+          git commit -m "Used a topic" || echo "nothing to commit"
+          git push || echo "nothing to push"
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: |
+            build/script.txt
+            build/meta.txt
+            build/video.mp4
+          if-no-files-found: ignore
+          retention-days: 7
