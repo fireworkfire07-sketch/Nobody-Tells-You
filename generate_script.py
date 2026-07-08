@@ -5,7 +5,7 @@ Generates faceless documentary-style scripts using the proven 6-filter formula
 distilled from three successful channels. Core principle: OPEN THE CURIOSITY GAP
 EARLY, KEEP IT OPEN, AND SAVE THE REAL PAYOFF FOR THE VERY END (retention-first).
 
-Requires: GROQ_API_KEY in environment (or NTY_GROQ_API_KEY).
+Requires: NTY_GROQ_API_KEY in environment (OpenRouter API key).
 Usage:    python generate_script.py "Why you're always tired"
 Output:   writes script.txt and meta.txt in the working directory.
 """
@@ -17,11 +17,12 @@ import re
 import urllib.request
 
 # ---- Config -----------------------------------------------------------------
-GROQ_API_KEY = os.environ.get("NTY_GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
-GROQ_MODEL = os.environ.get("NTY_GROQ_MODEL", "openai/gpt-oss-120b")
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+# OpenRouter API
+OPENROUTER_API_KEY = os.environ.get("NTY_GROQ_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.environ.get("NTY_GROQ_MODEL", "meta-llama/llama-3-70b-instruct")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Target length. ~130 wpm narration => 1600 words ~= 12 min.
+# Target length. ~130 wpm narration => 1900 words ~= 12-14 min.
 TARGET_WORDS = int(os.environ.get("NTY_TARGET_WORDS", "1900"))
 
 CHANNEL_NAME = "Nobody Tells You"
@@ -96,7 +97,7 @@ USER_TEMPLATE = """Topic for this episode: {topic}
 Write the full narration script now, following the structure and the retention
 rule (biggest revelation last). Output ONLY the spoken narration."""
 
-# Separate, cheaper call for the meta (title/description/tags).
+# Separate call for the meta (title/description/tags).
 META_SYSTEM = f"""
 You write YouTube metadata for the faceless channel "{CHANNEL_NAME}", which exposes
 hidden systems and truths. Given a topic and its script, produce metadata that
@@ -122,15 +123,17 @@ Return the JSON now."""
 
 
 def _post(payload):
-    if not GROQ_API_KEY:
-        sys.exit("ERROR: set NTY_GROQ_API_KEY (or GROQ_API_KEY) in the environment.")
+    if not OPENROUTER_API_KEY:
+        sys.exit("ERROR: set NTY_GROQ_API_KEY (or OPENROUTER_API_KEY) in the environment.")
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        GROQ_URL,
+        OPENROUTER_URL,
         data=data,
         headers={
-            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/fireworkfire07-sketch/nobody-tells-you",
+            "X-Title": "Nobody Tells You",
         },
     )
     with urllib.request.urlopen(req, timeout=180) as resp:
@@ -139,7 +142,7 @@ def _post(payload):
 
 def generate_script(topic):
     payload = {
-        "model": GROQ_MODEL,
+        "model": OPENROUTER_MODEL,
         "temperature": 0.8,
         "max_tokens": 6000,
         "messages": [
@@ -156,7 +159,7 @@ def generate_script(topic):
 
 def generate_meta(topic, script):
     payload = {
-        "model": GROQ_MODEL,
+        "model": OPENROUTER_MODEL,
         "temperature": 0.6,
         "max_tokens": 1500,
         "messages": [
