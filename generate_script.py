@@ -18,7 +18,7 @@ import urllib.request
 
 # ---- Config -----------------------------------------------------------------
 GROQ_API_KEY = os.environ.get("NTY_GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
-GROQ_MODEL = os.environ.get("NTY_GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.environ.get("NTY_GROQ_MODEL", "openai/gpt-oss-120b")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Target length. ~130 wpm narration => 1600 words ~= 12 min.
