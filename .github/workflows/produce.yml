@@ -16,6 +16,6 @@ jobs:
       - name: Video uret
         run: python pipeline.py
         env:
-          NTY_CLIENT_ID: ${{ secrets.NTY_CLIENT_ID }}
-          NTY_CLIENT_SECRET: ${{ secrets.NTY_CLIENT_SECRET }}
-          NTY_REFRESH_TOKEN: ${{ secrets.NTY_REFRESH_TOKEN }}
+          NTY_CLIENT_ID: ${{ secrets.NTY_YT_CLIENT_ID }}
+          NTY_CLIENT_SECRET: ${{ secrets.NTY_YT_CLIENT_SECRET }}
+          NTY_REFRESH_TOKEN: ${{ secrets.NTY_YT_REFRESH_TOKEN }}
