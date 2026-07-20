@@ -18,7 +18,7 @@ def slugify(value: str) -> str:
     return value.strip("-") or "video"
 
 
-def gemini(prompt: str, attempts: int = 3) -> str:
+def gemini(prompt: str, attempts: int = 5) -> str:
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         raise SystemExit("GEMINI_API_KEY secret is missing.")
@@ -38,8 +38,8 @@ def gemini(prompt: str, attempts: int = 3) -> str:
         if response.ok:
             break
         if response.status_code in (429, 503) and attempt < attempts:
-            print(f"Gemini {response.status_code}, retrying ({attempt}/{attempts})...")
-            time.sleep(15 * attempt)
+            print(f"Gemini {response.status_code}, retrying ({attempt}/{attempts})...", flush=True)
+            time.sleep(20 * attempt)
             continue
         raise SystemExit(
             f"Gemini request failed: HTTP {response.status_code}: {response.text[:800]}"
