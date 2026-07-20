@@ -101,6 +101,16 @@ def main():
         parcalar.append(vid)
         print(f"Sahne {i+1}/{len(sahneler)} tamam")
     birlestir(parcalar, "final.mp4")
+    print("Video hazir: final.mp4")
+
+    if os.environ.get("SKIP_YOUTUBE_UPLOAD", "").lower() in {"1", "true", "yes"}:
+        print("YouTube upload skipped for test run.")
+        return
+
+    required = ["NTY_CLIENT_ID", "NTY_CLIENT_SECRET", "NTY_REFRESH_TOKEN"]
+    missing = [name for name in required if not os.environ.get(name)]
+    if missing:
+        raise SystemExit(f"Missing YouTube secrets: {', '.join(missing)}")
     yukle("final.mp4")
 
 if __name__ == "__main__":
