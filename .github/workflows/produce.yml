@@ -6,6 +6,11 @@ on:
         description: "Video topic"
         required: false
         default: ""
+      upload_to_youtube:
+        description: "Upload final video to YouTube"
+        required: true
+        type: boolean
+        default: false
   repository_dispatch:
     types: [new_topic]
 jobs:
@@ -24,7 +29,7 @@ jobs:
         run: python nty_engine.py
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-2.0-flash
+          GEMINI_MODEL: gemini-2.5-flash
           VIDEO_TOPIC: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.topic || inputs.topic }}
       - name: Uretilen senaryo ve meta bilgisini artifact olarak yukle
         if: always()
@@ -36,7 +41,21 @@ jobs:
             script.txt
             meta.txt
             projects/
-      - name: Video uret
+      - name: Resolve upload setting
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "upload=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload=${{ inputs.upload_to_youtube }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Video uret (yuklemeden)
+        if: ${{ steps.resolve.outputs.upload != 'true' }}
+        run: python pipeline.py
+        env:
+          SKIP_YOUTUBE_UPLOAD: "true"
+      - name: Video uret ve yukle
+        if: ${{ steps.resolve.outputs.upload == 'true' }}
         run: python pipeline.py
         env:
           NTY_CLIENT_ID: ${{ secrets.NTY_YT_CLIENT_ID }}

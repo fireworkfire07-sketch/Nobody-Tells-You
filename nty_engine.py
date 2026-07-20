@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 
 DEFAULT_TOPIC = "The $9,000 Decision Nobody Warns You About"
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 
