@@ -1,6 +1,13 @@
 name: Video Uret ve Yukle
 on:
   workflow_dispatch:
+    inputs:
+      topic:
+        description: "Video topic"
+        required: false
+        default: ""
+  repository_dispatch:
+    types: [new_topic]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +20,22 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg
           pip install -r requirements.txt
+      - name: Senaryo uret
+        run: python nty_engine.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.0-flash
+          VIDEO_TOPIC: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.topic || inputs.topic }}
+      - name: Uretilen senaryo ve meta bilgisini artifact olarak yukle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nty-script-${{ github.run_number }}
+          if-no-files-found: warn
+          path: |
+            script.txt
+            meta.txt
+            projects/
       - name: Video uret
         run: python pipeline.py
         env:
