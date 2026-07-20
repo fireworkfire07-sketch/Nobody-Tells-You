@@ -2,6 +2,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,23 +18,29 @@ def slugify(value: str) -> str:
     return value.strip("-") or "video"
 
 
-def gemini(prompt: str) -> str:
+def gemini(prompt: str, attempts: int = 3) -> str:
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         raise SystemExit("GEMINI_API_KEY secret is missing.")
-    response = requests.post(
-        API_URL.format(model=MODEL),
-        params={"key": key},
-        json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.85,
-                "responseMimeType": "application/json",
+    for attempt in range(1, attempts + 1):
+        response = requests.post(
+            API_URL.format(model=MODEL),
+            params={"key": key},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.85,
+                    "responseMimeType": "application/json",
+                },
             },
-        },
-        timeout=180,
-    )
-    if not response.ok:
+            timeout=180,
+        )
+        if response.ok:
+            break
+        if response.status_code in (429, 503) and attempt < attempts:
+            print(f"Gemini {response.status_code}, retrying ({attempt}/{attempts})...")
+            time.sleep(15 * attempt)
+            continue
         raise SystemExit(
             f"Gemini request failed: HTTP {response.status_code}: {response.text[:800]}"
         )
