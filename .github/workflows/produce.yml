@@ -61,3 +61,29 @@ jobs:
           NTY_CLIENT_ID: ${{ secrets.NTY_YT_CLIENT_ID }}
           NTY_CLIENT_SECRET: ${{ secrets.NTY_YT_CLIENT_SECRET }}
           NTY_REFRESH_TOKEN: ${{ secrets.NTY_YT_REFRESH_TOKEN }}
+      - name: Video ve thumbnail'i artifact olarak yukle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nty-video-${{ github.run_number }}
+          if-no-files-found: warn
+          path: |
+            final.mp4
+            thumbnail.jpg
+      - name: Hata bildirimi gonder (Telegram)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID yok, bildirim atlaniyor."
+            exit 0
+          fi
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          TEXT=$(printf '⚠️ Workflow basarisiz\nRepo: %s\nWorkflow: %s\nRun: %s' \
+            "${{ github.repository }}" "${{ github.workflow }}" "$RUN_URL")
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode text="$TEXT" \
+            || echo "Telegram bildirimi gonderilemedi (workflow yine de basarisiz olarak isaretli kalir)."
