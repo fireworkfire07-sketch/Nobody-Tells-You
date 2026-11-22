@@ -33,7 +33,7 @@ def groq(prompt: str, attempts: int = 5) -> str:
                 "messages": [
                     {
                         "role": "system",
-                        "content": "Follow the instructions exactly and return valid JSON only, matching the requested schema.",
+                        "content": "Working principles (Good to Great): face brutal facts, no hype; stay in the channel's one niche; same disciplined structure every time; each output should push the flywheel the same direction. Follow the instructions exactly and return valid JSON only, matching the requested schema.",
                     },
                     {"role": "user", "content": prompt},
                 ],
